@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Absensi Bisa Semua HP</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-600: #4b5563;
+            --gray-800: #1f2937;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .sync-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255,255,255,0.2);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            margin-top: 10px;
+        }
+        .sync-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #86efac;
+            animation: blink 2s infinite;
+        }
+        @keyframes blink {
+            0%,100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        }
+        h2 {
+            font-size: 18px;
+            color: var(--gray-800);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .time-box {
+            background: linear-gradient(135deg, var(--primary), #7c3aed);
+            color: white;
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .time-box .tgl { font-size: 14px; opacity: 0.9; }
+        .time-box .jam { font-size: 28px; font-weight: 700; margin-top: 4px; }
+        .form-group { margin-bottom: 16px; }
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray-600);
+            margin-bottom: 8px;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--gray-200);
+            border-radius: 10px;
+            font-size: 15px;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), #7c3aed);
+            color: white;
+            margin-bottom: 10px;
+        }
+        .btn-primary:hover { transform: translateY(-2px); }
+        .btn-primary:disabled { opacity: 0.6; transform: none; cursor: not-allowed; }
+        .btn-refresh {
+            background: var(--gray-100);
+            color: var(--gray-600);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 12px 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-100);
+            font-size: 13px;
+        }
+        th {
+            background: var(--gray-100);
+            font-weight: 600;
+            color: var(--primary);
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .hadir { background: #dcfce7; color: #166534; }
+        .izin { background: #fef3c7; color: #92400e; }
+        .sakit { background: #dbeafe; color: #1e40af; }
+        .alpa { background: #fee2e2; color: #991b1b; }
+        .empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #9ca3af;
+        }
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--success);
+            color: white;
+            padding: 14px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 999;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        .auto-refresh-note {
+            font-size: 12px;
+            color: #9ca3af;
+            text-align: right;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📋 Sistem Absensi Bersama</h1>
+            <p>Data otomatis terlihat di semua HP yang terhubung</p>
+            <div class="sync-status">
+                <span class="sync-dot"></span>
+                <span id="syncText">Tersimpan online — Sinkron</span>
+            </div>
+        </header>
+
+        <!-- Form Absensi -->
+        <div class="card">
+            <h2>✍️ Catat Kehadiran</h2>
+            <div class="time-box">
+                <div class="tgl" id="tanggal"></div>
+                <div class="jam" id="jam"></div>
+            </div>
+            
+            <form id="formAbsensi">
+                <div class="form-group">
+                    <label>Nama Lengkap</label>
+                    <input type="text" id="nama" placeholder="Masukkan nama Anda" required>
+                </div>
+                <div class="form-group">
+                    <label>Nomor Identitas</label>
+                    <input type="text" id="iduser" placeholder="NIS / NIK / ID" required>
+                </div>
+                <div class="form-group">
+                    <label>Status Kehadiran</label>
+                    <select id="status">
+                        <option value="Hadir">✅ Hadir</option>
+                        <option value="Izin">📝 Izin</option>
+                        <option value="Sakit">🏥 Sakit</option>
+                        <option value="Alpa">❌ Tanpa Keterangan</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Keterangan Tambahan</label>
+                    <input type="text" id="keterangan" placeholder="Opsional">
+                </div>
+                <button type="submit" id="btnSimpan">✅ Simpan Absensi</button>
+            </form>
+        </div>
+
+        <!-- Daftar Absensi -->
+        <div class="card">
+            <h2>📊 Daftar Kehadiran</h2>
+            <button class="btn-refresh" onclick="ambilData()">🔄 Muat Ulang Data</button>
+            <div id="tabelWrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Nama</th>
+                            <th>Waktu</th>
+                            <th>Status</th>
+                            <th>Keterangan</th>
+                        </tr>
+                    </thead>
+                    <tbody id="daftarAbsensi">
+                        <tr><td colspan="5"><div class="empty">Memuat data...</div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="auto-refresh-note">Data diperbarui otomatis • Klik "Muat Ulang" untuk melihat yang terbaru</p>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">Berhasil Tersimpan!</div>
+
+    <script>
+        // === GANTI URL INI DENGAN URL MILIKMU ===
+        const URL_API = "https://script.google.com/macros/s/AKfycbxW_xY9_d06hE-QIkHsnfhxvKsGfrO5X9HAV58TCQbixWYGFYsBrJ8VHK9y3_xbxt8wnw/exec"; 
+        // =======================================
+
+        // Waktu
+        function tampilkanWaktu() {
+            const sekarang = new Date();
+            document.getElementById('tanggal').textContent = sekarang.toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+            document.getElementById('jam').textContent = sekarang.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+        }
+        tampilkanWaktu();
+        setInterval(tampilkanWaktu, 1000);
+
+        // Tampilkan pesan
+        function pesan(teks) {
+            const t = document.getElementById('toast');
+            t.textContent = teks;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        // Ambil data dari Google Sheets
+        async function ambilData() {
+            try {
+                document.getElementById('syncText').textContent = "Memuat...";
+                const res = await fetch(URL_API);
+                const hasil = await res.json();
+                tampilkanTabel(hasil.data);
+                document.getElementById('syncText').textContent = "Sinkron ✅";
+            } catch(err) {
+                document.getElementById('daftarAbsensi').innerHTML = `<tr><td colspan="5"><div class="empty">⚠️ Gagal memuat data. Cek koneksi internet.</div></td></tr>`;
+                document.getElementById('syncText').textContent = "Offline ❌";
+            }
+        }
+
+        // Tampilkan ke tabel
+        function tampilkanTabel(data) {
+            const tbody = document.getElementById('daftarAbsensi');
+            if (!data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5"><div class="empty">Belum ada data absensi</div></td></tr>`;
+                return;
+            }
+            tbody.innerHTML = '';
+            data.forEach((item, i) => {
+                if (i === 0) return; // lewati baris judul
+                const status = item[3] || '-';
+                let kelas = '';
+                if (status.includes('Hadir')) kelas = 'hadir';
+                else if (status.includes('Izin')) kelas = 'izin';
+                else if (status.includes('Sakit')) kelas = 'sakit';
+                else if (status.includes('Alpa')) kelas = 'alpa';
+                
+                tbody.innerHTML += `
+                <tr>
+                    <td>${i}</td>
+                    <td>${item[1] || '-'}</td>
+                    <td>${item[0] || '-'}</td>
+                    <td><span class="status-badge ${kelas}">${status}</span></td>
+                    <td>${item[4] || '-'}</td>
+                </tr>`;
+            });
+        }
+
+        // Kirim data baru
+        document.getElementById('formAbsensi').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSimpan');
+            btn.disabled = true;
+            btn.textContent = "Menyimpan...";
+
+            const data = {
+                waktu: new Date().toLocaleString('id-ID'),
+                nama: document.getElementById('nama').value,
+                iduser: document.getElementById('iduser').value,
+                status: document.getElementById('status').value,
+                keterangan: document.getElementById('keterangan').value
+            };
+
+            try {
+                await fetch(URL_API, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                pesan('✅ Absensi Tersimpan!');
+                this.reset();
+                ambilData(); // Muat ulang otomatis setelah simpan
+            } catch(err) {
+                pesan('❌ Gagal simpan. Cek internet.');
+            }
+            
+            btn.disabled = false;
+            btn.textContent = "✅ Simpan Absensi";
+        });
+
+        // Muat ulang otomatis setiap 30 detik
+        ambilData();
+        setInterval(ambilData, 30000);
+    </script>
+</body>
+</html>
